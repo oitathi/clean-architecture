@@ -1,0 +1,150 @@
+ServiceDeskProperties
+→ guarda configuração
+
+ServiceDeskAuthService
+→ gera access token
+
+ServiceDeskRequest
+→ representa o chamado
+
+ServiceDeskClient
+→ envia o chamado
+
+
+@Service
+@RequiredArgsConstructor
+public class ServiceDeskAuthService {
+
+    private final WebClient oauthWebClient;
+    private final ServiceDeskProperties properties;
+
+    public String getAccessToken() {
+
+        OAuthTokenResponse response = oauthWebClient
+                .post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/oauth/v2/token")
+                        .queryParam("client_id", properties.clientId())
+                        .queryParam("client_secret", properties.clientSecret())
+                        .queryParam("refresh_token", properties.refreshToken())
+                        .queryParam("grant_type", "refresh_token")
+                        .build())
+                .retrieve()
+                .bodyToMono(OAuthTokenResponse.class)
+                .block();
+
+        return response.accessToken();
+    }
+}
+
+
+
+public record OAuthTokenResponse(
+        @JsonProperty("access_token")
+        String accessToken
+) {
+}
+
+
+public record ServiceDeskRequest(
+        Request request
+) {
+
+    public record Request(
+            String subject,
+            String description
+    ) {
+    }
+}
+
+@Component
+@RequiredArgsConstructor
+public class ServiceDeskClient {
+
+    private final WebClient serviceDeskWebClient;
+    private final ServiceDeskAuthService authService;
+    private final ObjectMapper objectMapper;
+
+    public ServiceDeskResponse createTicket(
+            ServiceDeskRequest request) {
+
+        // PASSO 1
+        String accessToken =
+                authService.getAccessToken();
+
+        String inputData = toJson(request);
+
+        return serviceDeskWebClient
+
+                // PASSO 2
+                .post()
+                .uri("/api/v3/requests")
+
+                // PASSO 3
+                .header(
+                        HttpHeaders.AUTHORIZATION,
+                        "Zoho-oauthtoken " + accessToken
+                )
+
+                // PASSO 4
+                .contentType(
+                        MediaType.APPLICATION_FORM_URLENCODED
+                )
+                .body(
+                        BodyInserters.fromFormData(
+                                "input_data",
+                                inputData
+                        )
+                )
+
+                .retrieve()
+                .bodyToMono(ServiceDeskResponse.class)
+                .block();
+    }
+
+    private String toJson(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+}
+
+
+
+@Configuration
+@EnableConfigurationProperties(ServiceDeskProperties.class)
+public class ServiceDeskConfig {
+
+    @Bean
+    public WebClient oauthWebClient(
+            WebClient.Builder builder,
+            ServiceDeskProperties properties) {
+
+        return builder
+                .baseUrl(properties.oauthUrl())
+                .build();
+    }
+
+    @Bean
+    public WebClient serviceDeskWebClient(
+            WebClient.Builder builder,
+            ServiceDeskProperties properties) {
+
+        return builder
+                .baseUrl(properties.baseUrl())
+                .build();
+    }
+}
+
+
+@ConfigurationProperties(prefix = "service-desk")
+public record ServiceDeskProperties(
+        String baseUrl,
+        String oauthUrl,
+        String clientId,
+        String clientSecret,
+        String refreshToken
+) {
+}
