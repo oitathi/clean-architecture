@@ -1,0 +1,728 @@
+// ============================================================
+// build.gradle
+// ============================================================
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+}
+
+
+// ============================================================
+// application.yml
+// ============================================================
+//
+// spring:
+//   security:
+//     oauth2:
+//       client:
+//
+//         registration:
+//           servicedesk:
+//             provider: zoho
+//             client-id: ${SERVICE_DESK_CLIENT_ID}
+//             client-secret: ${SERVICE_DESK_CLIENT_SECRET}
+//             authorization-grant-type: authorization_code
+//             client-authentication-method: client_secret_post
+//             scope:
+//               - SDPOnDemand.requests.ALL
+//
+//         provider:
+//           zoho:
+//             authorization-uri: ${SERVICE_DESK_OAUTH_URL}/oauth/v2/auth
+//             token-uri: ${SERVICE_DESK_OAUTH_URL}/oauth/v2/token
+//
+// service-desk:
+//   base-url: ${SERVICE_DESK_BASE_URL}
+//   requests-path: /api/v3/requests
+//   refresh-token: ${SERVICE_DESK_REFRESH_TOKEN}
+//
+//
+// Exemplo das variáveis:
+//
+// SERVICE_DESK_CLIENT_ID=xxxxx
+// SERVICE_DESK_CLIENT_SECRET=xxxxx
+// SERVICE_DESK_REFRESH_TOKEN=1000.xxxxx
+// SERVICE_DESK_OAUTH_URL=https://accounts.zoho.com
+// SERVICE_DESK_BASE_URL=https://sdpondemand.manageengine.com
+//
+// ATENÇÃO:
+// dependendo do portal usado pela empresa, o requests-path pode ser:
+//
+// /app/meuportal/api/v3/requests
+//
+// em vez de:
+//
+// /api/v3/requests
+
+
+// ============================================================
+// ServiceDeskProperties.java
+// ============================================================
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@ConfigurationProperties(prefix = "service-desk")
+public record ServiceDeskProperties(
+
+        String baseUrl,
+
+        String requestsPath,
+
+        String refreshToken
+
+) {
+}
+
+
+// ============================================================
+// ServiceDeskConfig.java
+// ============================================================
+
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.oauth2.client.*;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Configuration
+@EnableConfigurationProperties(ServiceDeskProperties.class)
+public class ServiceDeskConfig {
+
+
+    // --------------------------------------------------------
+    // WebClient usado para chamar o ServiceDesk
+    // --------------------------------------------------------
+
+    @Bean
+    public WebClient serviceDeskWebClient(
+            WebClient.Builder builder,
+            ServiceDeskProperties properties) {
+
+        return builder
+                .baseUrl(properties.baseUrl())
+                .defaultHeader(
+                        HttpHeaders.ACCEPT,
+                        "application/vnd.manageengine.sdp.v3+json"
+                )
+                .build();
+    }
+
+
+    // --------------------------------------------------------
+    // Onde o Spring guarda:
+    //
+    // access_token
+    // refresh_token
+    //
+    // Aqui estamos usando memória.
+    // --------------------------------------------------------
+
+    @Bean
+    public OAuth2AuthorizedClientService authorizedClientService(
+            ClientRegistrationRepository registrations) {
+
+        return new InMemoryOAuth2AuthorizedClientService(
+                registrations
+        );
+    }
+
+
+    // --------------------------------------------------------
+    // Dizemos ao Spring:
+    //
+    // "Você pode renovar o access_token usando refresh_token"
+    // --------------------------------------------------------
+
+    @Bean
+    public OAuth2AuthorizedClientManager authorizedClientManager(
+
+            ClientRegistrationRepository registrations,
+
+            OAuth2AuthorizedClientService authorizedClientService) {
+
+
+        OAuth2AuthorizedClientProvider provider =
+                OAuth2AuthorizedClientProviderBuilder
+                        .builder()
+                        .refreshToken()
+                        .build();
+
+
+        AuthorizedClientServiceOAuth2AuthorizedClientManager manager =
+                new AuthorizedClientServiceOAuth2AuthorizedClientManager(
+                        registrations,
+                        authorizedClientService
+                );
+
+
+        manager.setAuthorizedClientProvider(provider);
+
+        return manager;
+    }
+
+
+    // --------------------------------------------------------
+    // Representa o "usuário técnico" dessa integração.
+    //
+    // Não é o usuário que está usando o sistema.
+    //
+    // É só uma identidade interna para o Spring associar
+    // o OAuth2AuthorizedClient.
+    // --------------------------------------------------------
+
+    @Bean
+    public Authentication serviceDeskPrincipal() {
+
+        return new AnonymousAuthenticationToken(
+                "servicedesk-key",
+                "servicedesk-integration",
+                AuthorityUtils.createAuthorityList(
+                        "ROLE_SERVICE_DESK"
+                )
+        );
+    }
+}
+
+
+// ============================================================
+// ServiceDeskOAuthInitializer.java
+// ============================================================
+//
+// ESSA CLASSE É IMPORTANTE.
+//
+// Lembra que nós geramos o refresh_token uma vez pelo Postman?
+//
+// Aqui nós entregamos esse refresh_token para o Spring Security.
+//
+// A partir daqui o Spring passa a conhecer:
+//
+// clientId
+// clientSecret
+// refreshToken
+//
+// e poderá gerar access_token.
+//
+
+import java.time.Instant;
+
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.stereotype.Component;
+
+@Component
+public class ServiceDeskOAuthInitializer
+        implements ApplicationRunner {
+
+    private final ClientRegistrationRepository registrations;
+
+    private final OAuth2AuthorizedClientService authorizedClientService;
+
+    private final ServiceDeskProperties properties;
+
+    private final Authentication serviceDeskPrincipal;
+
+
+    public ServiceDeskOAuthInitializer(
+
+            ClientRegistrationRepository registrations,
+
+            OAuth2AuthorizedClientService authorizedClientService,
+
+            ServiceDeskProperties properties,
+
+            Authentication serviceDeskPrincipal) {
+
+        this.registrations = registrations;
+        this.authorizedClientService = authorizedClientService;
+        this.properties = properties;
+        this.serviceDeskPrincipal = serviceDeskPrincipal;
+    }
+
+
+    @Override
+    public void run(ApplicationArguments args) {
+
+
+        // Pega a configuração "servicedesk"
+        // que colocamos no application.yml
+
+        ClientRegistration registration =
+                registrations.findByRegistrationId(
+                        "servicedesk"
+                );
+
+
+        // Criamos um access token propositalmente expirado.
+        //
+        // Por quê?
+        //
+        // Porque inicialmente nós NÃO temos um access_token.
+        // Temos somente o refresh_token.
+        //
+        // Assim o Spring percebe:
+        //
+        // "Esse access_token está vencido.
+        //  Tenho refresh_token.
+        //  Vou buscar um novo."
+
+        Instant now = Instant.now();
+
+        OAuth2AccessToken expiredAccessToken =
+                new OAuth2AccessToken(
+
+                        OAuth2AccessToken.TokenType.BEARER,
+
+                        "expired",
+
+                        now.minusSeconds(7200),
+
+                        now.minusSeconds(3600)
+                );
+
+
+        // Esse é o refresh_token que você gerou
+        // uma vez naquela chamada pelo Postman.
+
+        OAuth2RefreshToken refreshToken =
+                new OAuth2RefreshToken(
+
+                        properties.refreshToken(),
+
+                        now
+                );
+
+
+        OAuth2AuthorizedClient authorizedClient =
+                new OAuth2AuthorizedClient(
+
+                        registration,
+
+                        serviceDeskPrincipal.getName(),
+
+                        expiredAccessToken,
+
+                        refreshToken
+                );
+
+
+        // Entrega o refresh_token ao Spring Security.
+
+        authorizedClientService.saveAuthorizedClient(
+
+                authorizedClient,
+
+                serviceDeskPrincipal
+        );
+    }
+}
+
+
+// ============================================================
+// ServiceDeskTokenService.java
+// ============================================================
+//
+// ESSA CLASSE É QUEM PEDE O ACCESS TOKEN.
+//
+// Quem chama essa classe NÃO precisa saber se:
+//
+// - o token já existia
+// - o token estava válido
+// - o token venceu
+// - foi necessário usar o refresh_token
+//
+// Isso fica com o Spring Security.
+//
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.*;
+import org.springframework.stereotype.Service;
+
+@Service
+public class ServiceDeskTokenService {
+
+    private final OAuth2AuthorizedClientManager clientManager;
+
+    private final Authentication serviceDeskPrincipal;
+
+
+    public ServiceDeskTokenService(
+
+            OAuth2AuthorizedClientManager clientManager,
+
+            Authentication serviceDeskPrincipal) {
+
+        this.clientManager = clientManager;
+        this.serviceDeskPrincipal = serviceDeskPrincipal;
+    }
+
+
+    public String getAccessToken() {
+
+
+        OAuth2AuthorizeRequest request =
+                OAuth2AuthorizeRequest
+
+                        .withClientRegistrationId(
+                                "servicedesk"
+                        )
+
+                        .principal(
+                                serviceDeskPrincipal
+                        )
+
+                        .build();
+
+
+        OAuth2AuthorizedClient client =
+                clientManager.authorize(request);
+
+
+        if (client == null) {
+
+            throw new IllegalStateException(
+                    "Não foi possível obter o access token do ServiceDesk"
+            );
+        }
+
+
+        return client
+                .getAccessToken()
+                .getTokenValue();
+    }
+}
+
+
+// ============================================================
+// CreateTicketRequest.java
+// ============================================================
+//
+// Esse é o objeto que NOSSA API recebe.
+//
+
+public record CreateTicketRequest(
+
+        String subject,
+
+        String description
+
+) {
+}
+
+
+// ============================================================
+// ServiceDeskRequest.java
+// ============================================================
+//
+// Esse é o formato que enviaremos ao ServiceDesk.
+//
+
+public record ServiceDeskRequest(
+
+        Request request
+
+) {
+
+    public record Request(
+
+            String subject,
+
+            String description
+
+    ) {
+    }
+}
+
+
+// ============================================================
+// ServiceDeskResponse.java
+// ============================================================
+//
+// Por enquanto deixei simples.
+//
+// Depois você pode mapear exatamente todos os campos
+// que o ServiceDesk retorna.
+//
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public record ServiceDeskResponse(
+
+        JsonNode request,
+
+        JsonNode response_status
+
+) {
+}
+
+
+// ============================================================
+// ServiceDeskClient.java
+// ============================================================
+//
+// AGORA CHEGAMOS NA CHAMADA REAL.
+//
+// Essa classe:
+//
+// 1. pede o access_token
+// 2. faz POST
+// 3. adiciona Authorization
+// 4. envia input_data
+//
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+
+import org.springframework.stereotype.Component;
+
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+
+
+@Component
+public class ServiceDeskClient {
+
+
+    private final WebClient serviceDeskWebClient;
+
+    private final ServiceDeskTokenService tokenService;
+
+    private final ServiceDeskProperties properties;
+
+    private final ObjectMapper objectMapper;
+
+
+    public ServiceDeskClient(
+
+            WebClient serviceDeskWebClient,
+
+            ServiceDeskTokenService tokenService,
+
+            ServiceDeskProperties properties,
+
+            ObjectMapper objectMapper) {
+
+        this.serviceDeskWebClient = serviceDeskWebClient;
+        this.tokenService = tokenService;
+        this.properties = properties;
+        this.objectMapper = objectMapper;
+    }
+
+
+    public ServiceDeskResponse createTicket(
+            ServiceDeskRequest request) {
+
+
+        // ============================================
+        // PASSO 1
+        //
+        // PEGAR ACCESS TOKEN
+        // ============================================
+
+        String accessToken =
+                tokenService.getAccessToken();
+
+
+        // ============================================
+        // PASSO 2
+        //
+        // TRANSFORMAR NOSSO OBJETO EM JSON
+        // ============================================
+
+        String inputData =
+                toJson(request);
+
+
+        // ============================================
+        // PASSO 3
+        //
+        // CHAMAR SERVICEDESK
+        // ============================================
+
+        return serviceDeskWebClient
+
+                .post()
+
+                .uri(
+                        properties.requestsPath()
+                )
+
+
+                // ====================================
+                // PASSO 4
+                //
+                // ACCESS TOKEN NO HEADER
+                // ====================================
+
+                .header(
+                        HttpHeaders.AUTHORIZATION,
+
+                        "Zoho-oauthtoken "
+                                + accessToken
+                )
+
+
+                .contentType(
+                        MediaType.APPLICATION_FORM_URLENCODED
+                )
+
+
+                // ====================================
+                // BODY
+                //
+                // input_data = JSON
+                // ====================================
+
+                .body(
+                        BodyInserters.fromFormData(
+                                "input_data",
+                                inputData
+                        )
+                )
+
+
+                .retrieve()
+
+                .bodyToMono(
+                        ServiceDeskResponse.class
+                )
+
+                .block();
+    }
+
+
+    private String toJson(
+            Object value) {
+
+        try {
+
+            return objectMapper
+                    .writeValueAsString(value);
+
+        } catch (JsonProcessingException e) {
+
+            throw new IllegalStateException(
+                    "Erro ao montar request do ServiceDesk",
+                    e
+            );
+        }
+    }
+}
+
+
+// ============================================================
+// SupportService.java
+// ============================================================
+//
+// Aqui fica a regra da SUA aplicação.
+//
+// Ele não precisa saber nada sobre:
+// OAuth
+// refresh token
+// access token
+// headers
+//
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class SupportService {
+
+
+    private final ServiceDeskClient serviceDeskClient;
+
+
+    public SupportService(
+            ServiceDeskClient serviceDeskClient) {
+
+        this.serviceDeskClient =
+                serviceDeskClient;
+    }
+
+
+    public ServiceDeskResponse createTicket(
+            CreateTicketRequest request) {
+
+
+        ServiceDeskRequest serviceDeskRequest =
+                new ServiceDeskRequest(
+
+                        new ServiceDeskRequest.Request(
+
+                                request.subject(),
+
+                                request.description()
+                        )
+                );
+
+
+        return serviceDeskClient
+                .createTicket(
+                        serviceDeskRequest
+                );
+    }
+}
+
+
+// ============================================================
+// SupportController.java
+// ============================================================
+//
+// Endpoint da SUA aplicação.
+//
+// Exemplo:
+//
+// POST /support/tickets
+//
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/support")
+public class SupportController {
+
+
+    private final SupportService supportService;
+
+
+    public SupportController(
+            SupportService supportService) {
+
+        this.supportService =
+                supportService;
+    }
+
+
+    @PostMapping("/tickets")
+    public ResponseEntity<ServiceDeskResponse> createTicket(
+
+            @RequestBody
+            CreateTicketRequest request) {
+
+
+        ServiceDeskResponse response =
+                supportService.createTicket(request);
+
+
+        return ResponseEntity.ok(response);
+    }
+}
