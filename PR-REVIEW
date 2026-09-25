@@ -1,0 +1,22 @@
+Revise esta branch comparando-a com a main, como se estivesse fazendo o code review de uma Pull Request.
+
+Analise somente as alterações introduzidas por esta PR, sem avaliar código antigo que não foi modificado.
+
+Não altere nenhum arquivo.
+
+Verifique:
+
+* possíveis bugs ou erros de lógica;
+* regressões;
+* problemas de segurança;
+* tratamento inadequado de erros e exceções;
+* problemas de qualidade e legibilidade do código;
+* complexidade desnecessária;
+* duplicação de código;
+* possíveis problemas de arquitetura ou responsabilidade das classes;
+* inconsistências com os padrões já utilizados no projeto;
+* possíveis casos não cobertos por testes.
+
+Para cada problema encontrado, informe o arquivo e o trecho/linha correspondente, explique por que isso pode ser um problema e sugira um comentário que eu poderia deixar na PR.
+
+Não faça alterações automaticamente. Quero apenas a análise para que eu possa decidir quais comentários fazer no review.
