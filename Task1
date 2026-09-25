@@ -1,0 +1,47 @@
+Analise o arquivo scripts/import_consorcio_users.py.
+
+Crie testes automatizados para esse script Python.
+
+IMPORTANTE:
+- Não altere o código de produção.
+- Não altere import_consorcio_users.py.
+- Crie apenas os arquivos necessários para os testes.
+- Use unittest e unittest.mock da biblioteca padrão do Python sempre que possível.
+- Não faça chamadas HTTP reais.
+- Mocke urllib.request.urlopen.
+- Os testes devem rodar localmente sem depender de AWS, BFF, Mockoon ou rede.
+
+Cubra pelo menos os seguintes cenários:
+
+1. CSV válido.
+2. CSV vazio.
+3. Colunas obrigatórias ausentes ou incorretas.
+4. atriumUserId vazio.
+5. atriumUserId duplicado.
+6. CPF inválido.
+7. email vazio.
+8. dealerFlexCode vazio.
+9. userName vazio.
+10. profile inválido.
+11. create_user com resposta HTTP de sucesso.
+12. HTTP 400, 409 e 422 devem resultar em REJECTED.
+13. HTTP 401 e 403 devem gerar erro de autorização.
+14. HTTP 429 deve realizar retry.
+15. HTTP 5xx deve realizar retry.
+16. URLError/timeout deve realizar retry.
+17. Após esgotar os retries, deve gerar RuntimeError.
+18. import_users deve continuar processando quando um usuário for REJECTED.
+19. import_users deve interromper o processamento em erro fatal.
+20. generate_report deve gerar o CSV com line_number, atriumUserId, status e message.
+21. generate_batch_id deve gerar um identificador no formato esperado.
+22. confirm_production não deve pedir confirmação fora de production.
+23. confirm_production deve exigir a palavra PRODUCTION no ambiente production.
+24. dry-run deve validar os dados sem executar importação.
+
+Use arquivos temporários para os testes de CSV e relatório, para não deixar arquivos gerados no projeto.
+
+Depois de criar os testes:
+- mostre quais arquivos foram criados;
+- explique resumidamente o que cada teste verifica;
+- informe o comando exato para executar todos os testes;
+- não execute alterações automáticas no código de produção mesmo que encontre problemas. Apenas me informe os problemas encontrados.
