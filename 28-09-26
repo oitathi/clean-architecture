@@ -1,0 +1,11 @@
+Analise o contrato OpenAPI deste projeto para o endpoint GET /dealers/trees.
+
+A partir do schema da resposta HTTP 200 desse endpoint, crie manualmente as classes Java necessárias para representar completamente o response.
+
+Não utilize nem altere as classes autogeradas pelo OpenAPI.
+Crie novas classes Java independentes, reproduzindo a estrutura do response definida no openapi.yaml.
+
+Use records Java, se compatível com o padrão do projeto.
+Mantenha exatamente os nomes dos campos do contrato.
+
+Crie somente os models necessários para desserializar a resposta do GET /dealers/trees.
