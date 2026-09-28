@@ -1,0 +1,18 @@
+Analise este projeto para me ajudar a implementar a task “BFF: consultar pontos de venda autorizados para atribuição”.
+
+O novo endpoint será GET /api/v1/commission-assignments/sale-points.
+
+Antes de sugerir implementação, quero que você investigue o código existente e responda, citando classes, métodos e arquivos exatos:
+
+1. Como o projeto identifica o usuário autenticado/executor e onde obtém seu identificador?
+2. Onde fica o UserProfile persistido e como são obtidos role/profile e dealerAccount? Mostre entity/model, repository e services/resolvers envolvidos.
+3. Como ADMIN, MANAGER e SELLER são representados atualmente?
+4. Analise DealerCnpjResolver.java: qual é sua responsabilidade, quais dados recebe, quais serviços chama e o que retorna?
+5. Analise DealerManagementClient.java: quais endpoints do Dealer Management já são chamados? Já existe chamada para /dealers/trees? Existe suporte a externalCodeType, externalCode, hierarchyScope=OWNER_GROUP e enrichCustomer=true?
+6. Analise DealerSalePointMappingEntity.java e seu repository. Quais campos existem? Já é possível buscar mapping por dealerAccount, FLEX code ou código Bradesco? Mostre os métodos existentes.
+7. Procure no projeto onde atualmente é resolvido o escopo de pontos de venda/dealers que um usuário pode acessar, especialmente na busca de cotas. Explique o fluxo completo e diga quais partes podem ser reutilizadas nesta task.
+8. Onde atualmente são aplicadas autorizações por perfil e retornados 401 e 403? Mostre um endpoint semelhante que possamos usar como padrão.
+9. Como os endpoints definidos em TypeSpec são implementados no Java? Mostre um endpoint existente semelhante, desde main.tsp até controller/delegate/service.
+10. Existe algum DTO/model que já represente ponto de venda com mapping id, Bradesco code, dealerAccount e display name?
+11. Como erros do Dealer Management são tratados atualmente? Uma falha externa propaga erro ou existe fallback?
+12. Com base somente no código existente, proponha quais arquivos precisariam ser alterados ou criados para esta task. Não escreva a implementação ainda.
