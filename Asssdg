@@ -1,0 +1,11 @@
+Analise este projeto e crie um teste de arquitetura usando ArchUnit para garantir que não existam dependências circulares entre os pacotes.
+
+A regra deve ser aplicada genericamente a todos os pacotes do projeto, sem que eu precise informar manualmente quais pacotes devem ser verificados.
+
+Considere A, B e C apenas como exemplos abstratos de quaisquer pacotes do projeto:
+
+* Se classes do pacote A importam/dependem de classes do pacote C, então classes do pacote C não podem importar/depender de classes do pacote A.
+* Se classes do pacote B importam/dependem de classes do pacote C, então classes do pacote C não podem importar/depender de classes do pacote B.
+* Também devem ser detectados ciclos indiretos, como A → B → C → A.
+
+Ou seja, qualquer dependência entre pacotes deve ser unidirecional e nenhum ciclo entre pacotes pode existir.
