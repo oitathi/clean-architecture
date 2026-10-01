@@ -1,0 +1,23 @@
+Analise a arquitetura deste projeto, especialmente o uso do Spring Modulith.
+
+Preciso que uma classe do módulo `entrypoint` consulte dados que pertencem ao módulo `servicing`.
+
+No módulo `servicing` existem:
+- `servicing.api`, marcado com `@NamedInterface("api")`
+- `servicing.core`
+- `servicing.core.port`
+- `servicing.infra.persistence`
+
+Já existe `DealerSalePointMappingRepository` em `servicing.core.port`, cuja implementação acessa a persistência.
+
+Quero descobrir qual é o padrão JÁ EXISTENTE neste projeto para um módulo consumir uma funcionalidade de outro módulo.
+
+Procure exemplos reais no código onde:
+1. um módulo chama outro módulo;
+2. o módulo chamado expõe uma API pública por um `@NamedInterface`;
+3. essa API chega até um use case/core/repository interno.
+
+Mostre as classes e packages encontrados e o fluxo de dependências entre elas.
+
+Não crie código novo e não sugira uma arquitetura ainda.
+Quero primeiro identificar e seguir o padrão já utilizado no projeto.
