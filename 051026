@@ -1,0 +1,9 @@
+Dentro da pasta acceptanceTest, analise os testes existentes e siga exatamente o mesmo padrão de estrutura, organização, nomenclatura e implementação.
+
+Crie uma nova pasta para cenAssociation e implemente os testes de aceitação com Cucumber para os cenários relacionados ao CenAssociation.
+
+Reutilize a infraestrutura, steps, configurações e convenções já existentes nos outros acceptance tests sempre que possível.
+
+Não altere os testes unitários existentes nem código de produção, a menos que seja estritamente necessário para que os novos acceptance tests compilem e executem.
+
+Ao final, execute os testes criados e corrija eventuais erros.
