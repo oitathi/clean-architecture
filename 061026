@@ -1,0 +1,13 @@
+Não implemente nem altere nenhum arquivo. Quero apenas o plano para que eu mesma faça a implementação.
+
+Para cada ticket:
+
+* explique primeiro o objetivo e por que ele existe;
+* indique quais arquivos/classes existentes precisam ser alterados;
+* indique quais novos arquivos/classes precisam ser criados, se houver;
+* informe o package/caminho de cada arquivo;
+* descreva, em ordem, cada alteração que devo fazer;
+* explique a responsabilidade de cada classe/método novo;
+* indique quais testes devo criar ou alterar;
+* diga quais comandos devo executar para validar a implementação;
+* defina claramente o critério para considerar o ticket concluído.
