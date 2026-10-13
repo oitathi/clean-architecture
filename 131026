@@ -1,0 +1,24 @@
+Preciso realizar uma análise técnica da task CON-105 — Servicing: modelar atribuição e histórico no agregado de cota.
+
+Neste momento, NÃO implemente nada, não altere arquivos e não gere código. Quero apenas entender o que precisa ser desenvolvido.
+
+Consulte a documentação disponível no Grill with Docs, os requisitos da CON-105, a CON-71 e as tasks relacionadas, especialmente CON-102 e CON-138.
+
+Analise também a estrutura atual do projeto, principalmente o módulo servicing, incluindo domínio (core), entidades JPA, repositories, mappers e migrations.
+
+Quero que você me apresente:
+
+1. Objetivo da task: explique de forma clara e objetiva qual problema de negócio a CON-105 pretende resolver.
+2. O que já existe: identifique as classes, entidades, campos e funcionalidades que podem ser reutilizados.
+3. O que precisa ser desenvolvido: detalhe as alterações necessárias, separando domínio, persistência, regras de negócio e migrations.
+4. Classes envolvidas: informe quais classes existentes provavelmente precisarão ser modificadas e quais novas classes poderão ser necessárias, justificando cada uma.
+5. Regras de negócio: explique o funcionamento das atribuições, confirmações, histórico imutável, controle de concorrência e cálculo do prazo de confirmação.
+6. Banco de dados: explique as alterações necessárias na QuotaEntity e a finalidade da nova tabela quota_gen_assignments, incluindo os relacionamentos e constraints exigidos.
+7. Dependências: identifique o que depende de outras tasks e o que efetivamente pertence ao escopo da CON-105.
+8. Critérios de aceite: relacione cada critério de aceite com a alteração técnica necessária para atendê-lo.
+9. Dúvidas e ambiguidades: identifique requisitos que não estejam suficientemente claros e que precisem ser confirmados com o arquiteto.
+10. Plano de desenvolvimento: proponha uma sequência lógica de implementação, indicando por onde devemos começar e o que deve ser feito em cada etapa.
+
+Respeite a arquitetura e os padrões existentes no projeto. Não proponha novas abstrações desnecessárias nem presuma regras que não estejam documentadas.
+
+Reforçando: quero somente a análise, o levantamento técnico e o planejamento. Não crie, edite ou exclua nenhum arquivo. Não execute migrations nem faça qualquer alteração no projeto. Aguarde minha autorização explícita antes de iniciar qualquer implementação.
