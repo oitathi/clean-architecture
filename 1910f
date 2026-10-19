@@ -1,0 +1,7 @@
+Analise a classe Quota e os comandos existentes no pacote servicing.domain.quota.command.
+
+Considerando os requisitos da CON-105, proponha somente a estrutura do record ConfirmQuotaCenAssignmentCommand, seguindo os padrões atuais do projeto.
+
+Não implemente nem altere arquivos. Mostre o código sugerido e explique brevemente cada campo.
+
+Não invente regras de negócio ainda não definidas, especialmente sobre identificação de revendas.
