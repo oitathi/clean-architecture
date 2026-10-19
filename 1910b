@@ -1,0 +1,16 @@
+Implemente o cálculo do associationDeadline para a CON-105.
+
+Regras:
+
+* Utilizar QuotaAttributes.allocatedAt como data de referência.
+* Considerar o fuso America/Sao_Paulo.
+* Encontrar o primeiro dia útil nacional do mês seguinte à alocação.
+* Desconsiderar sábados, domingos e feriados nacionais.
+* Definir associationDeadline como 00:00 do dia seguinte ao primeiro dia útil, representando um limite exclusivo.
+* Manter a regra de negócio no domínio ou em um serviço de domínio apropriado.
+* Não utilizar a API da TOTVS.
+* Verificar se já existe alguma biblioteca de calendário no projeto antes de adicionar dependências.
+* Não alterar associationClosedAt nem revision.
+* Criar testes unitários para o cálculo.
+
+Antes de implementar, identifique onde essa regra deve ser chamada na criação da cota e apresente a proposta. Não altere arquivos ainda.
