@@ -1,0 +1,1 @@
+bash -c 'source ~/.config/mcp-atlassian/jira.env && if [ -n "$JIRA_URL" ] && { [ -n "$JIRA_API_TOKEN" ] || [ -n "$JIRA_PERSONAL_TOKEN" ]; }; then echo "Jira configurado"; else echo "Configuração incompleta"; fi'
