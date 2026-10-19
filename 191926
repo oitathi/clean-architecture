@@ -1,3 +1,6 @@
 bash -c 'source ~/.config/mcp-atlassian/jira.env && if [ -n "$JIRA_URL" ] && { [ -n "$JIRA_API_TOKEN" ] || [ -n "$JIRA_PERSONAL_TOKEN" ]; }; then echo "Jira configurado"; else echo "Configuração incompleta"; fi'
 grep -E '^[[:space:]]*(export[[:space:]]+)?JIRA_[A-Z_]+=' ~/.config/mcp-atlassian/jira.env | cut -d= -f1
 bash -c 'source ~/.config/mcp-atlassian/jira.env; if [ -n "$JIRA_URL" ] && [ -n "$JIRA_USERNAME" ] && [ -n "$JIRA_TOKEN" ]; then echo "Credenciais presentes"; else echo "Credenciais ausentes"; fi'
+source ~/.config/mcp-atlassian/jira.env
+export JIRA_API_TOKEN="$JIRA_TOKEN"
+echo "Variável ajustada para teste"
