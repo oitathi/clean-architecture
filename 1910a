@@ -1,0 +1,12 @@
+Analise as classes Quota, RegisterQuotaCommand e QuotaJpaRepository.
+
+Na CON-105, precisamos distinguir a criação de uma nova cota da reconstrução de uma cota persistida.
+
+Proponha a menor alteração possível para:
+
+1. Manter RegisterQuotaCommand responsável pela criação.
+2. Permitir reconstruir uma Quota preservando associationDeadline, associationClosedAt e revision.
+3. Evitar recalcular o deadline durante a reconstrução.
+4. Preservar os padrões arquiteturais existentes.
+
+Não implemente nada ainda. Mostre quais métodos e classes precisam mudar e explique a proposta.
