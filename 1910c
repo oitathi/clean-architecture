@@ -1,0 +1,7 @@
+Permitir a criação da cota com associationDeadline nulo quando allocatedAt não estiver disponível.
+
+Quando allocatedAt chegar posteriormente pelo fluxo de atualização, calcular o associationDeadline apenas se ele ainda estiver nulo.
+
+Se já existir um deadline, preservá-lo, sem recalcular.
+
+Antes de implementar, verifique se esse comportamento está de acordo com a CON-105 e se existe alguma regra que proíba a criação de cotas sem data de alocação.
