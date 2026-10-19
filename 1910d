@@ -1,0 +1,1 @@
+O plano está aprovado em termos de arquitetura. Antes de implementar, ajuste a política de calendário para considerar apenas os feriados nacionais legais do Brasil, salvo se houver uma definição diferente na CON-105. Verifique também a cobertura do Dia da Consciência Negra. Preserve os demais comportamentos previstos no plano e não implemente ainda.
