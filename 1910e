@@ -1,0 +1,31 @@
+Estou implementando a task CON-105 — Servicing: modelar atribuição e histórico no agregado de cota.
+
+Preciso que você analise o código existente e identifique o que falta para concluir a implementação.
+
+Contexto:
+
+* Já criamos QuotaCenAssignment, QuotaCenAssignmentEntity, os repositories e os mapeamentos toDomain() e toEntity().
+* A classe Quota já possui associationDeadline, associationClosedAt e revision.
+* A tabela quota_cen_assignments já possui uma migration.
+* A confirmação CEN deve gerar um histórico imutável.
+* Uma mesma cota comercial pode passar por cancelamento e revenda, exigindo uma nova confirmação para cada venda.
+* Cada venda pode ter somente uma confirmação.
+
+Analise especialmente:
+
+1. Como o SalesIngestionUseCase identifica uma venda e se uma revenda pode reutilizar o mesmo Quota.id.
+2. Como garantir uma única confirmação por venda, sem impedir confirmações legítimas de revendas.
+3. Se o contrato atual de QuotaCenAssignmentRepository, especialmente findByQuotaId(), está correto.
+4. Como implementar a confirmação no agregado Quota, respeitando o padrão arquitetural existente.
+5. O que falta para garantir histórico imutável, concorrência otimista e persistência transacional.
+6. Quais testes faltam para atender aos critérios da CON-105.
+
+Importante:
+
+* NÃO implemente nada.
+* NÃO altere nenhum arquivo.
+* NÃO presuma regras de negócio que não estejam comprovadas pelo código ou pelo Jira.
+* Identifique as classes e métodos relevantes.
+* Separe o que já está implementado do que ainda falta.
+* Apresente um plano de implementação em ordem, com passos pequenos, aproveitando ao máximo o código existente.
+* Destaque decisões de negócio que precisam de confirmação antes de implementar.
