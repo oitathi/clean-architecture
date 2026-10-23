@@ -1,0 +1,13 @@
+Alex, pensei em uma alternativa para resolver essa questão dos filtros sem depender da paginação.
+
+Podemos ter uma única API, por exemplo, GET /quotas/filter-options, que retorne todos os grupos, cotas e versões disponíveis na base, independentemente dos 10 registros retornados na página atual.
+
+Os parâmetros seriam opcionais. Assim, se chamarmos a API sem nenhum parâmetro, ela retorna todas as opções disponíveis para cada filtro.
+
+Se o usuário selecionar o grupo 9999, por exemplo, chamamos GET /quotas/filter-options?group=9999, e a API retorna as cotas e versões correspondentes àquele grupo.
+
+O mesmo funcionaria no sentido inverso: o usuário poderia selecionar uma cota sem precisar selecionar um grupo antes.
+
+A consulta dos registros continuaria paginada normalmente, enquanto a consulta das opções dos filtros seria independente, utilizando valores distintos do banco.
+
+Dessa forma, conseguimos manter uma única API para os filtros, sem precisar carregar todos os registros no frontend e sem limitar as opções à página atual.
