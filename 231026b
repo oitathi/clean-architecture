@@ -1,0 +1,6 @@
+@GetMapping("/quotas/filter-options")
+public FilterOptionsResponse getFilterOptions(
+    @RequestParam(required = false) String group,
+    @RequestParam(required = false) String quota,
+    @RequestParam(required = false) Integer version
+);
